@@ -5,14 +5,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.rkr.androidassignment.R
+import com.rkr.androidassignment.databinding.FragmentDeviceListBinding
 import com.rkr.androidassignment.di.AppComponentProvider
+import com.rkr.androidassignment.ui.MainViewModel
 import kotlinx.coroutines.flow.collectLatest
 import javax.inject.Inject
 
@@ -24,6 +26,7 @@ class DeviceFragment : Fragment() {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private val viewModel: DeviceViewModel by viewModels { viewModelFactory }
+    private val sharedViewModel: MainViewModel by activityViewModels { viewModelFactory }
     private val deviceRecyclerViewAdapter: DeviceRecyclerViewAdapter = DeviceRecyclerViewAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,9 +37,12 @@ class DeviceFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_device_list, container, false)
+    ): View {
 
+        val fragmentDeviceListBinding = FragmentDeviceListBinding.inflate(inflater)
+        fragmentDeviceListBinding.sharedViewModel = sharedViewModel
+        fragmentDeviceListBinding.lifecycleOwner = this
+        val view = fragmentDeviceListBinding.root
         // Set the adapter
         if (view is RecyclerView) {
             with(view) {
