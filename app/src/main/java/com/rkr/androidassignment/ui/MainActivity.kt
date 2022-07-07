@@ -5,9 +5,16 @@ import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
+import com.firebase.ui.auth.data.model.FirebaseAuthUIAuthenticationResult
+import com.google.firebase.auth.FirebaseAuth
 import com.rkr.androidassignment.R
 import com.rkr.androidassignment.di.AppComponentProvider
 import java.net.InetAddress
@@ -17,6 +24,12 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "MainActivity"
+    }
+
+    private val signInLauncher = registerForActivityResult(
+        FirebaseAuthUIActivityResultContract()
+    ) { res ->
+        this.onSignInResult(res)
     }
 
     @Inject
@@ -67,6 +80,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         (application as AppComponentProvider).getAppComponent().inject(this)
         setContentView(R.layout.activity_main)
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user == null) {
+            signIn()
+        } else {
+            viewModel.setLoggedInState(true)
+        }
     }
 
     private fun discoverServices() {
@@ -93,7 +112,60 @@ class MainActivity : AppCompatActivity() {
     // NsdHelper's tearDown method
     private fun tearDown() {
         nsdManager?.apply {
-            stopServiceDiscovery(discoveryListener)
+            try {
+                stopServiceDiscovery(discoveryListener)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
+    }
+
+    private fun signIn() {
+        // Choose authentication providers
+        val providers = arrayListOf(
+            AuthUI.IdpConfig.EmailBuilder().build()
+        )
+
+// Create and launch sign-in intent
+        val signInIntent = AuthUI.getInstance()
+            .createSignInIntentBuilder()
+            .setAvailableProviders(providers)
+            .build()
+        signInLauncher.launch(signInIntent)
+    }
+
+    private fun onSignInResult(result: FirebaseAuthUIAuthenticationResult) {
+        if (result.resultCode == RESULT_OK) {
+            // Successfully signed in
+            val user = FirebaseAuth.getInstance().currentUser
+            viewModel.setLoggedInState(true)
+            Toast.makeText(this, "Welcome ${user?.displayName.orEmpty()}", Toast.LENGTH_SHORT)
+                .show()
+        } else {
+            viewModel.setLoggedInState(false)
+            Toast.makeText(this, "Sign in failed, please try again later", Toast.LENGTH_SHORT)
+                .show()
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.logout, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.action_logout) {
+            actionLogout()
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun actionLogout() {
+        AuthUI.getInstance()
+            .signOut(this)
+            .addOnCompleteListener {
+                viewModel.setLoggedInState(false)
+                finish()
+            }
     }
 }
