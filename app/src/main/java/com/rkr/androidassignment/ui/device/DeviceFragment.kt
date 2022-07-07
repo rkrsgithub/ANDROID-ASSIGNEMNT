@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.rkr.androidassignment.R
@@ -49,6 +50,24 @@ class DeviceFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         observeDeviceList()
+        setClickListener()
+        observeNavigation()
+    }
+
+    private fun observeNavigation() {
+        lifecycleScope.launchWhenCreated {
+            viewModel.navigationListener.collectLatest {
+                it?.let {
+                    findNavController().navigate(it)
+                }
+            }
+        }
+    }
+
+    private fun setClickListener() {
+        deviceRecyclerViewAdapter.setOnItemClickListener { _, _, _ ->
+            viewModel.onClickDevice()
+        }
     }
 
     private fun observeDeviceList() {
