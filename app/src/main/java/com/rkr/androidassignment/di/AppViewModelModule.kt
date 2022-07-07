@@ -3,6 +3,7 @@ package com.rkr.androidassignment.di
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.rkr.androidassignment.ui.MainViewModel
+import com.rkr.androidassignment.ui.detail.DetailViewModel
 import com.rkr.androidassignment.ui.device.DeviceViewModel
 import dagger.Binds
 import dagger.Module
@@ -24,5 +25,10 @@ abstract class AppViewModelModule {
     @IntoMap
     @ViewModelMapKey(DeviceViewModel::class)
     abstract fun bindDeviceViewModel(viewModel: DeviceViewModel): ViewModel
+
+    @Binds
+    @IntoMap
+    @ViewModelMapKey(DetailViewModel::class)
+    abstract fun bindDetailViewModel(viewModel: DetailViewModel): ViewModel
 
 }
